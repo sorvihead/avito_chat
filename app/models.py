@@ -17,7 +17,7 @@ class User(db.Model):
 
 class Chat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     users = db.relationship(
         'User', secondary=chat_user,
@@ -30,7 +30,7 @@ class Chat(db.Model):
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(10000))
+    text = db.Column(db.String(10000), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    chat_id = db.Column(db.Integer, db.ForeignKey('chat.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    chat_id = db.Column(db.Integer, db.ForeignKey('chat.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
