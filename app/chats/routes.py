@@ -27,7 +27,7 @@ def add_chat():
                 return jsonify({"error": "user id must be an integer"}), 400
             user = User.query.filter_by(id=user_id).first()
             if not user:
-                return jsonify({"error": f"User {user_id} not found"})
+                return jsonify({"error": f"User {user_id} is not found"}), 404
             users_entities.append(user)
         try:
             chat = Chat(name=chat_name)
@@ -39,3 +39,19 @@ def add_chat():
         return jsonify(chat.id)
             
 
+@bp.route('/get', methods=["POST"])
+def get_chats():
+    if request.content_type == 'application/json':
+        user_id = request.json.get("user")
+        if not user_id:
+            return jsonify({"error": "user id expected"}), 400
+        try:
+            user_id = int(user_id)
+        except ValueError:
+            return jsonify({"error": "user id must be an integer"}), 400
+        user = User.query.filter_by(id=user_id).first()
+        if not user:
+            return jsonify({"error": f"user {user_id} is not found"}), 404
+        chats = [chat for chat in user.chats]
+        columns = [col.name for chat in chats for col in chat.__table__.columns]
+        return jsonify([{column: getattr(chat, column) for column in columns} for chat in chats])

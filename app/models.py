@@ -9,12 +9,6 @@ chat_user = db.Table(
 )
 
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(30), unique=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-
 class Chat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
@@ -22,10 +16,21 @@ class Chat(db.Model):
     users = db.relationship(
         'User', secondary=chat_user,
         primaryjoin=(chat_user.c.chat_id == id),
-        secondaryjoin=(chat_user.c.user_id == User.id),  # TODO
-        lazy='dynamic'
+        lazy='dynamic',
     )
     messages = db.relationship('Message', backref='chat', lazy='dynamic')
+
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(30), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    chats = db.relationship(
+        'Chat', secondary=chat_user,
+        primaryjoin=(chat_user.c.user_id == id),
+        order_by=Chat.created_at.desc,
+        lazy='dynamic',
+    )
 
 
 class Message(db.Model):
