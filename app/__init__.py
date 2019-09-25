@@ -1,11 +1,15 @@
 from config import Config
+
 from flask import Flask
+
+from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
 
 db = SQLAlchemy()
 migrate = Migrate()
+ma = Marshmallow()
 
 
 def create_app(config_class=Config):
@@ -14,6 +18,7 @@ def create_app(config_class=Config):
 
     db.init_app(app)
     migrate.init_app(app, db)
+    ma.init_app(app)
 
     from app.chats import bp as chats
     app.register_blueprint(chats, url_prefix='/chats')
