@@ -29,6 +29,9 @@ def create_app(config_class=Config):
     from app.users import bp as users
     app.register_blueprint(users, url_prefix='/users')
 
+    from app.errors import bp as errors
+    app.register_blueprint(errors)
+
     return app
 
 from app import models

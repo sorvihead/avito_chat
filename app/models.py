@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlalchemy import event
 
 from sqlalchemy.exc import ArgumentError
+from sqlalchemy.exc import InvalidRequestError
 
 
 chat_user = db.Table(
@@ -49,25 +50,24 @@ class User(db.Model):
 @event.listens_for(Message, 'init')
 def recieve_message_init(target, args, kwargs):
     author, chat = kwargs['author'], kwargs['chat']
+    author = User.query.get(author.id)
+    chat = Chat.query.get(chat.id)
     if not author or not chat:
         raise ArgumentError("author or chat is not found")
     if author in chat.users:
         return kwargs
     else:
-        raise ArgumentError("author must be in a chat")
-    author = User.query.get(author.id)
-    chat = Chat.query.get(chat.id)
-
+        raise InvalidRequestError("author must be in a chat")
 
 
 @event.listens_for(Chat, 'init')
 def recieve_chat_init(target, args, kwargs):
     chat_name = kwargs.get('name')
     if not chat_name:
-        raise ArgumentError("Missing chat name")
+        raise InvalidRequestError("Missing chat name")
     chat = Chat.query.filter_by(name=chat_name).first()
     if chat:
-        raise ArgumentError("Chat name must be an unique")
+        raise InvalidRequestError("Chat name must be an unique")
     users = kwargs['users']
     for user in users:
         user = User.query.get(user.id)
@@ -80,8 +80,8 @@ def recieve_chat_init(target, args, kwargs):
 def recieve_user_init(target, args, kwargs):
     username = kwargs.get('username')
     if not username:
-        raise ArgumentError("Missing username")
+        raise InvalidRequestError("Missing username")
     user = User.query.filter_by(username=username).first()
     if user:
-        raise ArgumentError("Username must be an unique")
+        raise InvalidRequestError("Username must be an unique")
     return kwargs

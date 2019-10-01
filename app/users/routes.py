@@ -1,12 +1,13 @@
 from app import db
 from app.models import User
 from app.users import bp
+from app.errors.errors import error_response
 from app.schemas import UserSchema
 
 from flask import jsonify
 from flask import request
 
-from sqlalchemy.exc import IntegrityError, ArgumentError
+from sqlalchemy.exc import InvalidRequestError, ArgumentError
 
 user_schema = UserSchema()
 
@@ -17,15 +18,12 @@ def add_user():
         user_info = request.json
         errors = user_schema.validate(user_info)
         if errors:
-            return jsonify(errors), 400
+            return error_response(status_code=400, message=errors)
         try:
             user = user_schema.load(user_info)
             db.session.add(user)
             db.session.commit()
-        except ArgumentError as err:
-            return jsonify({"error":[error for error in err.args]}), 400
+        except InvalidRequestError as err:
+            return error_response(status_code=400, message=[e for e in err.args])
         
-        return jsonify(user.id)
-
-    else:
-        return jsonify({"error": "not a json"}), 400
+        return jsonify(user.id), 201

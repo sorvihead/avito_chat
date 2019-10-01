@@ -7,13 +7,14 @@ from app.schemas import UserSchema
 from app.schemas import ChatSchema
 from app.schemas import MessageSchema
 from app.chats.helpers import get_sorted_chats
+from app.errors.errors import error_response
 
 from app.chats import bp
 
 from flask import jsonify
 from flask import request
 
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.exc import ArgumentError
 
 chat_schema = ChatSchema()
@@ -24,17 +25,22 @@ user_schema = UserSchema()
 @bp.route('/add', methods=["POST"])
 def add_chat():
     if request.content_type == "application/json":
-        chat_info = request.json
-        errors = chat_schema.validate(chat_info)
+        chat_info = request.get_json()
+        try:
+            errors = chat_schema.validate(chat_info)
+        except ArgumentError as err:
+            return error_response(status_code=404, message=[e for e in err.args])
         if errors:
-            return jsonify(errors), 400
+            return error_response(status_code=400, message=errors)
         try:
             chat = chat_schema.load(chat_info)
             db.session.add(chat)
             db.session.commit()
-            return jsonify(chat.id)
+            return jsonify(chat.id), 201
         except ArgumentError as err:
-            return jsonify({"error": [error for error in err.args]}), 400
+            return error_response(status_code=404, message=[e for e in err.args])
+        except InvalidRequestError as err:
+            return error_response(status_code=400)
 
 
 @bp.route('/get', methods=["POST"])
@@ -42,12 +48,11 @@ def get_chats():
     if request.content_type == 'application/json':
         user_info = request.json
         if not user_info.get('user'):
-            return jsonify({"error": "missing field user"}), 400
-        errors = user_schema.validate(user_info, partial=True)
-        if errors:
-            return jsonify(errors), 400
-        user = User.query.get(user_info.get('user'))
-        if not user:
-            return jsonify({"error": f"user is not found"}), 404
+            return error_response(status_code=400, message="missing field user")
+        try:
+            user_id = int(user_info.get('user'))
+        except ValueError:
+            return error_response(status_code=400, message="user id must be an integer")
+        user = User.query.get_or_404(user_id)
         chats = get_sorted_chats(user.chats)
-        return chats_schema.jsonify(chats)
+        return chats_schema.jsonify(chats), 200
