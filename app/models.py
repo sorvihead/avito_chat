@@ -49,10 +49,15 @@ class User(db.Model):
 @event.listens_for(Message, 'init')
 def recieve_message_init(target, args, kwargs):
     author, chat = kwargs['author'], kwargs['chat']
+    if not author or not chat:
+        raise ArgumentError("author or chat is not found")
     if author in chat.users:
         return kwargs
     else:
         raise ArgumentError("author must be in a chat")
+    author = User.query.get(author.id)
+    chat = Chat.query.get(chat.id)
+
 
 
 @event.listens_for(Chat, 'init')

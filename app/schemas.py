@@ -35,19 +35,13 @@ class ChatSchema(ma.ModelSchema):
     class Meta(BaseSchema.Meta):
         model = Chat
 
-    
-    @validates_schema
-    def validate_length_users(self, data, **kwargs):
-        if len(data["users"]) < 2:
-            raise ValidationError("Chat must contain >= 2 users")
-
 
 class MessageSchema(ma.ModelSchema):
     id = Integer(required=False)
     text = Str(required=True)
     created_at = DateTime(required=False)
-    author = Nested('UserSchema', only=("id", ), required=True)
-    chat = Nested('ChatSchema', only=("id", ), required=True)
+    author = Pluck('UserSchema', "id", required=True)
+    chat = Pluck('ChatSchema', "id", required=True)
 
     class Meta(BaseSchema.Meta):
         model = Message
