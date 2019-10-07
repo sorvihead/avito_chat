@@ -7,7 +7,6 @@ from sqlalchemy import event
 from sqlalchemy.exc import ArgumentError
 from sqlalchemy.exc import InvalidRequestError
 
-
 chat_user = db.Table(
     'chat-user',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
@@ -52,8 +51,7 @@ def recieve_message_init(target, args, kwargs):
     author, chat = kwargs['author'], kwargs['chat']
     author = User.query.get(author.id)
     chat = Chat.query.get(chat.id)
-    if not author or not chat:
-        raise ArgumentError("author or chat is not found")
+
     if author in chat.users:
         return kwargs
     else:
@@ -63,8 +61,6 @@ def recieve_message_init(target, args, kwargs):
 @event.listens_for(Chat, 'init')
 def recieve_chat_init(target, args, kwargs):
     chat_name = kwargs.get('name')
-    if not chat_name:
-        raise InvalidRequestError("Missing chat name")
     chat = Chat.query.filter_by(name=chat_name).first()
     if chat:
         raise InvalidRequestError("Chat name must be an unique")
@@ -79,8 +75,6 @@ def recieve_chat_init(target, args, kwargs):
 @event.listens_for(User, 'init')
 def recieve_user_init(target, args, kwargs):
     username = kwargs.get('username')
-    if not username:
-        raise InvalidRequestError("Missing username")
     user = User.query.filter_by(username=username).first()
     if user:
         raise InvalidRequestError("Username must be an unique")

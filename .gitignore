@@ -3,3 +3,4 @@ venv
 app.db
 __pycache__
 app/__pycache__
+.idea

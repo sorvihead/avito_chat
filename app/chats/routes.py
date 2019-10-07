@@ -5,7 +5,6 @@ from app.models import Chat
 from app.models import User
 from app.schemas import UserSchema
 from app.schemas import ChatSchema
-from app.schemas import MessageSchema
 from app.chats.helpers import get_sorted_chats
 from app.errors.errors import error_response
 
@@ -26,10 +25,8 @@ user_schema = UserSchema()
 def add_chat():
     if request.content_type == "application/json":
         chat_info = request.get_json()
-        try:
-            errors = chat_schema.validate(chat_info)
-        except ArgumentError as err:
-            return error_response(status_code=404, message=[e for e in err.args])
+        errors = chat_schema.validate(chat_info)
+
         if errors:
             return error_response(status_code=400, message=errors)
         try:
@@ -40,13 +37,13 @@ def add_chat():
         except ArgumentError as err:
             return error_response(status_code=404, message=[e for e in err.args])
         except InvalidRequestError as err:
-            return error_response(status_code=400)
+            return error_response(status_code=400, message=[e for e in err.args])
 
 
 @bp.route('/get', methods=["POST"])
 def get_chats():
     if request.content_type == 'application/json':
-        user_info = request.json
+        user_info = request.get_json()
         if not user_info.get('user'):
             return error_response(status_code=400, message="missing field user")
         try:

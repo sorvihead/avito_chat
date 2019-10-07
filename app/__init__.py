@@ -6,7 +6,6 @@ from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
-
 db = SQLAlchemy()
 migrate = Migrate()
 ma = Marshmallow()
@@ -32,6 +31,13 @@ def create_app(config_class=Config):
     from app.errors import bp as errors
     app.register_blueprint(errors)
 
+    from app.errors.errors import bad_request, not_found_error, internal_server_error
+    app.register_error_handler(400, bad_request)
+    app.register_error_handler(404, not_found_error)
+    app.register_error_handler(500, internal_server_error)
+
+
     return app
+
 
 from app import models

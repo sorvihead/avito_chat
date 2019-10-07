@@ -22,18 +22,21 @@ msgs_schema = MessageSchema(many=True)
 @bp.route('/get', methods=['POST'])
 def get_messages():
     chat_info = request.get_json()
-    if not chat_info:
-        return error_response(status_code=400, message="missing data")
-    errors = chat_schema.validate(chat_info, partial=True)
-    if errors:
-        return error_response(status_code=400, message=errors)
-    chat = Chat.query.get_or_404(chat_info.get('chat'))
+    if not chat_info.get('chat'):
+        return error_response(status_code=400, message="missing chat id")
+    try:
+        chat_id = int(chat_info.get('chat'))
+    except ValueError:
+        return jsonify({"errors": "chat id must be an integer"}), 400
+    chat = Chat.query.get_or_404(chat_id)
     return msgs_schema.jsonify(chat.messages), 200
 
 
 @bp.route('/add', methods=['POST'])
 def add_message():
     msg_info = request.get_json()
+    chat = Chat.query.get_or_404(msg_info.get('chat'))
+    author = Chat.query.get_or_404(msg_info.get('author'))
     try:
         msg = msg_schema.load(msg_info)
         db.session.add(msg)
