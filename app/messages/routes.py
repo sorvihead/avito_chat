@@ -36,7 +36,7 @@ def get_messages():
 def add_message():
     msg_info = request.get_json()
     chat = Chat.query.get_or_404(msg_info.get('chat'))
-    author = Chat.query.get_or_404(msg_info.get('author'))
+    author = User.query.get_or_404(msg_info.get('author'))
     try:
         msg = msg_schema.load(msg_info)
         db.session.add(msg)
